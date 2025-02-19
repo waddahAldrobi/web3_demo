@@ -119,7 +119,6 @@ def main():
             for block_number in range(last_processed_block + 1, current_block + 1):
                 block = w3.eth.get_block(block_number)
                 print(f"Processing block: {block.number}")
-                print(f"Block timestamp: {block.timestamp*1000}")
                 print(f"Block time: {datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()}")
 
                 process_block(block)
