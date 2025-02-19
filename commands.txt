@@ -1,0 +1,13 @@
+docker exec -it kafka kafka-console-producer --topic uniswap-topic --bootstrap-server localhost:9092
+
+docker exec -it kafka kafka-console-consumer --topic uniswap-topic --from-beginning --bootstrap-server localhost:9092
+
+curl -X POST -H "Content-Type: application/json" --data @postgres-sink.json http://localhost:8083/connectors
+curl -X DELETE http://localhost:8083/connectors/postgres-sink
+
+docker-compose down -v
+
+docker-compose up -d
+
+Check Kafka Topics
+docker exec -it kafka kafka-topics --bootstrap-server kafka:9092 --list

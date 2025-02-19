@@ -1,0 +1,19 @@
+{
+  "name": "postgres-sink",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "connection.url": "jdbc:postgresql://postgres:5432/mydatabase",
+    "connection.user": "admin",
+    "connection.password": "password",
+    "topics": "uniswap-topic",
+    "table.name.format": "uniswap.swap",
+    "insert.mode": "insert",
+    "pk.mode": "none",
+    "pk.fields": "id",
+    "auto.create": "true",
+    "auto.evolve": "true",
+    "delete.enabled": "false",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "true"
+  }
+}
