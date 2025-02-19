@@ -132,7 +132,6 @@ def save_state(state):
 
 def process_block(block: BlockData):
     block_number = block.number
-    # block_time = datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()
     block_time = block.timestamp * 1000  # Convert to milliseconds
     event_filter = contract.events.Swap.create_filter(
         from_block=block_number, to_block=block_number
