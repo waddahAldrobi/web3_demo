@@ -167,7 +167,7 @@ def main():
                 block = w3.eth.get_block(block_number)
                 print(f"Processing block: {block.number}")
                 print(
-                    f"Block time: {datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()}"
+                    f"Block time: {datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()} \n"
                 )
 
                 process_block(block)
