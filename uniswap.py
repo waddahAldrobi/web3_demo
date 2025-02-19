@@ -2,7 +2,9 @@ import json
 import os
 import time
 from web3 import Web3
+from web3.types import BlockData
 from confluent_kafka import Producer
+from datetime import datetime, timezone
 
 # Ethereum RPC endpoint
 rpc_url = "https://eth-mainnet.g.alchemy.com/v2/4OuWznL5wxq_yl-ujF7Cybb4iTfve1bG"
@@ -52,10 +54,11 @@ def delivery_report(err, msg):
 
 def send_message(key, value):
     message = {"schema": {"type": "struct", "fields": [
+        {"type": "int64", "optional": False, "field": "block_number"},
+        {"type": "int64", "optional": False, "field": "block_time"},
         {"type": "string", "optional": False, "field": "contract_address"},
         {"type": "string", "optional": False, "field": "tx_hash"},
         {"type": "int64", "optional": False, "field": "index"},
-        {"type": "int64", "optional": False, "field": "block_number"},
         {"type": "string", "optional": False, "field": "sender"},
         {"type": "string", "optional": False, "field": "recipient"},
         {"type": "int64", "optional": True, "field": "amount0"},
@@ -77,17 +80,21 @@ def save_state(state):
     with open(state_file, 'w') as f:
         json.dump(state, f)
 
-def process_block(block_number):
+def process_block(block: BlockData):
+    block_number = block.number
+    # block_time = datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()
+    block_time = block.timestamp*1000 # Convert to milliseconds
     event_filter = contract.events.Swap.create_filter(from_block=block_number, to_block=block_number)
     events = event_filter.get_all_entries()
     
     for index, event in enumerate(events):
         event_args = event["args"]
         data = {
+            "block_number": block_number,
+            "block_time": block_time,
             "contract_address": str(POOL_ADDRESS),
             "tx_hash": event.get("transactionHash", "").hex() if "transactionHash" in event else "",
             "index": index,
-            "block_number": block_number,
             "sender": event_args.get("sender", ""),
             "recipient": event_args.get("recipient", ""),
             "amount0": int(event_args.get("amount0", 0)),
@@ -111,11 +118,11 @@ def main():
         if current_block > last_processed_block:
             for block_number in range(last_processed_block + 1, current_block + 1):
                 block = w3.eth.get_block(block_number)
-                block_time = block.timestamp
-                print(f"Processing block: {block_number}")
-                print(f"Block time: {block_time}")
+                print(f"Processing block: {block.number}")
+                print(f"Block timestamp: {block.timestamp*1000}")
+                print(f"Block time: {datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()}")
 
-                process_block(block_number)
+                process_block(block)
                 last_processed_block = block_number
                 save_state({'last_processed_block': last_processed_block})
         

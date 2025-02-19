@@ -14,6 +14,11 @@
     "auto.evolve": "true",
     "delete.enabled": "false",
     "value.converter": "org.apache.kafka.connect.json.JsonConverter",
-    "value.converter.schemas.enable": "true"
+    "value.converter.schemas.enable": "true",
+    "transforms": "TimestampConverter",
+    "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+    "transforms.TimestampConverter.field": "block_time",
+    "transforms.TimestampConverter.target.type": "Timestamp",
+    "transforms.TimestampConverter.format": "yyyy-MM-dd HH:mm:ss"
   }
 }
