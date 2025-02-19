@@ -82,13 +82,6 @@ producer_config = {"bootstrap.servers": KAFKA_BROKER}
 producer = Producer(producer_config)
 
 
-def delivery_report(err, msg):
-    if err is not None:
-        print(f"❌ Message delivery failed: {err}")
-    else:
-        print(f"✅ Message delivered to {msg.topic()} [{msg.partition()}]")
-
-
 def send_message(key, value):
     message = {
         "schema": {
@@ -113,9 +106,7 @@ def send_message(key, value):
         "payload": value,
     }
 
-    producer.produce(
-        TOPIC, key=str(key), value=json.dumps(message), callback=delivery_report
-    )
+    producer.produce(TOPIC, key=str(key), value=json.dumps(message))
 
 
 def load_state():
