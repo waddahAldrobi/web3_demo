@@ -1,7 +1,11 @@
+import json
+import os
+import time
 from web3 import Web3
+from confluent_kafka import Producer
 
-# Replace with your Ethereum RPC endpoint
-rpc_url = "https://eth-mainnet.g.alchemy.com/v2/4OuWznL5wxq_yl-ujF7Cybb4iTfve1bG"  # Example: Infura, Alchemy, or local node
+# Ethereum RPC endpoint
+rpc_url = "https://eth-mainnet.g.alchemy.com/v2/4OuWznL5wxq_yl-ujF7Cybb4iTfve1bG"
 w3 = Web3(Web3.HTTPProvider(rpc_url))
 
 # Check connection
@@ -9,7 +13,7 @@ if w3.is_connected():
     print("✅ Connected to Ethereum!")
 else:
     print("❌ Connection failed.")
-
+    exit(1)
 
 POOL_ADDRESS = Web3.to_checksum_address('0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640')
 
@@ -31,33 +35,92 @@ abi = [
     }
 ]
 
-# Use the checksum address in your contract initialization
 contract = w3.eth.contract(address=POOL_ADDRESS, abi=abi)
+state_file = 'state.json'
 
-from_block = 13558910
-to_block = 13558912
+# Kafka configuration
+TOPIC = "uniswap-topic"
+KAFKA_BROKER = "localhost:29092"
+producer_config = {'bootstrap.servers': KAFKA_BROKER}
+producer = Producer(producer_config)
 
-# Create filter for Swap events in block range
-event_filter = contract.events.Swap.create_filter(from_block=from_block, to_block=to_block)
+def delivery_report(err, msg):
+    if err is not None:
+        print(f"❌ Message delivery failed: {err}")
+    else:
+        print(f"✅ Message delivered to {msg.topic()} [{msg.partition()}]")
 
-# Fetch all matching events
-events = event_filter.get_all_entries()
+def send_message(key, value):
+    message = {"schema": {"type": "struct", "fields": [
+        {"type": "string", "optional": False, "field": "contract_address"},
+        {"type": "string", "optional": False, "field": "tx_hash"},
+        {"type": "int64", "optional": False, "field": "index"},
+        {"type": "int64", "optional": False, "field": "block_number"},
+        {"type": "string", "optional": False, "field": "sender"},
+        {"type": "string", "optional": False, "field": "recipient"},
+        {"type": "int64", "optional": True, "field": "amount0"},
+        {"type": "int64", "optional": True, "field": "amount1"},
+        {"type": "double", "optional": True, "field": "sqrt_price_x96"},
+        {"type": "int64", "optional": True, "field": "liquidity"},
+        {"type": "int64", "optional": True, "field": "tick"}
+    ], "optional": False, "name": "uniswap_swap"}, "payload": value}
+    
+    producer.produce(TOPIC, key=str(key), value=json.dumps(message), callback=delivery_report)
 
+def load_state():
+    if os.path.exists(state_file):
+        with open(state_file, 'r') as f:
+            return json.load(f)
+    return None
 
+def save_state(state):
+    with open(state_file, 'w') as f:
+        json.dump(state, f)
 
-for event in events:
-    print(event)
-    # print(f"contract_address: {event['args']['contract_address']}")
-    # print(f"tx_hash: {event['args']['tx_hash']}")
-    # print(f"index: {event['args']['index']}")
-    # print(f"block_time: {event['args']['block_time']}")
-    # print(f"block_number: {event['args']['block_number']}")
-    print(f"Sender: {event['args']['sender']}, Recipient: {event['args']['recipient']}")
-    print(f"Amount0: {event['args']['amount0']}, Amount1: {event['args']['amount1']}")
-    print(f"Liquidity: {event['args']['liquidity']}, Tick: {event['args']['tick']}")
-    print("="*50)
-    print('\n')
+def process_block(block_number):
+    event_filter = contract.events.Swap.create_filter(from_block=block_number, to_block=block_number)
+    events = event_filter.get_all_entries()
+    
+    for index, event in enumerate(events):
+        event_args = event["args"]
+        data = {
+            "contract_address": str(POOL_ADDRESS),
+            "tx_hash": event.get("transactionHash", "").hex() if "transactionHash" in event else "",
+            "index": index,
+            "block_number": block_number,
+            "sender": event_args.get("sender", ""),
+            "recipient": event_args.get("recipient", ""),
+            "amount0": int(event_args.get("amount0", 0)),
+            "amount1": int(event_args.get("amount1", 0)),
+            "sqrt_price_x96": float(event_args.get("sqrtPriceX96", 0)),
+            "liquidity": int(event_args.get("liquidity", 0)),
+            "tick": int(event_args.get("tick", 0))
+        }
 
+        # print(data)
+        send_message(key=index, value=data)
 
+def main():
+    state = load_state()
+    last_processed_block = state.get('last_processed_block', w3.eth.block_number)
+    save_state({'last_processed_block': last_processed_block})
+    print(f"Starting from block: {last_processed_block}")
+    
+    while True:
+        current_block = w3.eth.block_number
+        if current_block > last_processed_block:
+            for block_number in range(last_processed_block + 1, current_block + 1):
+                block = w3.eth.get_block(block_number)
+                block_time = block.timestamp
+                print(f"Processing block: {block_number}")
+                print(f"Block time: {block_time}")
 
+                process_block(block_number)
+                last_processed_block = block_number
+                save_state({'last_processed_block': last_processed_block})
+        
+        producer.flush()
+        time.sleep(10)
 
+if __name__ == "__main__":
+    main()
