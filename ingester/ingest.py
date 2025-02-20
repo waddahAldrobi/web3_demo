@@ -14,7 +14,9 @@ CONFIG = "uniswap_swap"
 def main():
     pipeline = Pipeline(CONFIG)
     state_manager = State(STATE_FILE)
-    last_processed_block = state_manager.get_last_processed_block(pipeline.web3)
+    last_processed_block = state_manager.get_last_processed_block(
+        pipeline.web3.eth.block_number
+    )
     print(f"Starting from block: {last_processed_block}")
 
     while True:
