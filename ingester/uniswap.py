@@ -9,7 +9,8 @@ from State import State
 from Pipeline import Pipeline
 
 
-KAFKA_BROKER = "localhost:29092"
+# KAFKA_BROKER = "localhost:29092"
+KAFKA_BROKER = "kafka:9092"
 STATE_FILE = "state.json"
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
