@@ -3,7 +3,6 @@
 ### Prerequisites
 
 - Docker and Docker Compose installed.
-- Kafka, Prometheus, and Grafana set up.
 
 ### Run the Pipeline 
 
