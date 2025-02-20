@@ -1,5 +1,15 @@
 # Pipeline Setup and Configuration
 
+### Diagram
+![Pipeline Diagram](media/diagram.png)
+
+In this repo, we use Alchemy's RPC to run a script that transforms the data into Kafka messages. 
+
+We use Kafka-Connect to write to Postgres.
+
+We use Kafka-export to write metrics to Promethus, and optionally run Grafana for monitoring.
+
+
 ### Prerequisites
 
 - Docker and Docker Compose installed.
