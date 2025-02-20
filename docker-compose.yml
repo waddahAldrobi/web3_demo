@@ -1,6 +1,6 @@
 version: '4.0'
 services:
-  app:
+  ingester:
     image: python:3.11-slim
     volumes:
       - ./:/app
