@@ -8,7 +8,15 @@ KAFKA_BROKER = "kafka:9092"
 
 
 class Pipeline:
-    def __init__(self, config_name: str, web3: Web3):
+    """Processes Ethereum blocks and sends transformed event data to Kafka."""
+
+    def __init__(self, config_name: str):
+        """
+        Initializes the pipeline with Ethereum RPC, contract details, and Kafka producer.
+
+        Args:
+            config_name (str): Name of the configuration file (without extension).
+        """
         self.config_name = config_name
         self.config = self._load_config(config_name)
         self.rpc = self.config["ethereum_rpc_url"]
@@ -19,10 +27,9 @@ class Pipeline:
         self.schema = self.config["schema"]
 
         self.web3 = Web3(Web3.HTTPProvider(self.rpc))
-        if self.web3.is_connected():
-            print("Connected to RPC!")
-        else:
+        if not self.web3.is_connected():
             raise ConnectionError("Connection to RPC failed.")
+        print("Connected to RPC!")
 
         self.contract = self.web3.eth.contract(address=self.pool_address, abi=self.abi)
         self.producer = Producer({"bootstrap.servers": KAFKA_BROKER})
@@ -31,21 +38,44 @@ class Pipeline:
             "uniswap_swap": to_uniswap_swap,
         }
 
-    def _load_config(self, config_name):
+    def _load_config(self, config_name: str) -> dict:
+        """
+        Loads the configuration from a JSON file.
+
+        Args:
+            config_name (str): Configuration file name (without extension).
+
+        Returns:
+            dict: Parsed configuration data.
+        """
         path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), f"configs/{config_name}.json"
         )
         with open(path, "r") as config_file:
             return json.load(config_file)
 
-    def send_message(self, key, value):
+    def send_message(self, key: str, value: dict):
+        """
+        Sends a message to Kafka.
+
+        Args:
+            key (str): Message key.
+            value (dict): Message payload.
+        """
         message = {"schema": self.schema, "payload": value}
         self.producer.produce(self.kafka_topic, key=key, value=json.dumps(message))
 
     def flush(self):
+        """Flushes the Kafka producer queue."""
         self.producer.flush()
 
     def process_block(self, block: BlockData):
+        """
+        Processes a block, extracts swap events, and sends them to Kafka.
+
+        Args:
+            block (BlockData): Ethereum block data.
+        """
         block_number = block.number
         block_time = block.timestamp * 1000  # Convert to milliseconds
         event_filter = self.contract.events.Swap.create_filter(
@@ -64,7 +94,22 @@ class Pipeline:
                 self.send_message(key, data)
 
 
-def to_uniswap_swap(block_number, block_time, contract_address, index, event):
+def to_uniswap_swap(
+    block_number: int, block_time: int, contract_address: str, index: int, event
+) -> dict:
+    """
+    Transforms a Uniswap swap event into a structured dictionary.
+
+    Args:
+        block_number (int): Block number of the event.
+        block_time (int): Timestamp of the block in milliseconds.
+        contract_address (str): Address of the contract emitting the event.
+        index (int): Index of the event within the block.
+        event: Raw event data.
+
+    Returns:
+        dict: Transformed event data.
+    """
     event_args = event["args"]
     return {
         "block_number": block_number,
