@@ -98,7 +98,7 @@ def to_uniswap_swap(
     block_number: int, block_time: int, contract_address: str, index: int, event
 ) -> dict:
     """
-    Transforms a Uniswap swap event into a structured dictionary.
+    Transforms a Web3 event into a Uniswap swap as a structured dictionary.
 
     Args:
         block_number (int): Block number of the event.

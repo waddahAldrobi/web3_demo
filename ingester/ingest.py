@@ -1,7 +1,4 @@
 import time
-from web3 import Web3
-from web3.types import BlockData
-from confluent_kafka import Producer
 from datetime import datetime, timezone
 from State import State
 from Pipeline import Pipeline
