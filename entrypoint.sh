@@ -8,9 +8,11 @@ done
 echo "Kafka Connect is ready."
 
 
-# Register the Kafka Connect sink connector
-echo "Registering PostgreSQL Sink Connector...\n"
-curl -X POST -H "Content-Type: application/json" --data @postgres-sink.json http://kafka-connect:8083/connectors || echo "Connector already exists. \n"
+# Register all Kafka Connect sink connectors
+for file in ingester/kafka-sink-configs/*.json; do
+    echo "Registering Kafka Sink Connector from $file..."
+    curl -X POST -H "Content-Type: application/json" --data @"$file" http://kafka-connect:8083/connectors || echo "Connector from $file already exists."
+done
 
 # Run the Uniswap ingester script in the foreground
 echo "Running the Uniswap ingester script... \n"
