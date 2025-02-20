@@ -90,7 +90,6 @@ class Pipeline:
                 data = transform_fn(
                     block_number, block_time, str(self.pool_address), index, event
                 )
-                print("Data:", data)
                 self.send_message(key, data)
 
 
