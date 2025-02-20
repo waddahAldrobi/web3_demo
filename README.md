@@ -26,7 +26,8 @@ From the root of the repo:
 This will start ingestion from the RPC to the Postgres table.
 
 If a `state.json` exists, the pipeline will start from there.
-IF not, it will create one and start from the Head of the chain. 
+
+If not, it will create one and start from the Head of the chain. 
 
 
 ### Shut down (With Volumes Delete)
