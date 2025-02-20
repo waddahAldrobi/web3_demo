@@ -14,4 +14,4 @@ curl -X POST -H "Content-Type: application/json" --data @postgres-sink.json http
 
 # Run the Uniswap ingester script in the foreground
 echo "Running the Uniswap ingester script... \n"
-exec python3 -u ingester/uniswap.py
+exec python3 -u ingester/ingest.py
