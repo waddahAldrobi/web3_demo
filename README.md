@@ -8,6 +8,9 @@ In this repo, we use Alchemy's RPC to run a script that transforms the data into
 We use Kafka-Connect to write to Postgres.
 
 We use Kafka-export to write metrics to Promethus, and optionally run Grafana for monitoring.
+ 
+
+We use the Swap event from Uniswap v3 USDC / ETH 0.05% pool 0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640 as an example.
 
 
 ### Prerequisites
