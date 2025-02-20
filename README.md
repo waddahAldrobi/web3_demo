@@ -49,6 +49,9 @@ Run the Kafka exporter after the pipeline starts (Kafka topics must be available
 7. Paste the JSON from `/grafana/Pipeline Ingestion Dashboard.json`
 8. Click `Load` and select `prometheus` as data source
 
+You should see a dashboard like this
+![Pipeline Diagram](media/grafana.png)
+
 ### How to Add a New Configuration
 
 1. Navigate to `ingester/configs`.
