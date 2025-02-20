@@ -1,3 +1,5 @@
 .venv
 state.json
 connect-plugins/*
+__pycache__
+.DS_Store
