@@ -5,7 +5,9 @@ from State import State
 from Pipeline import Pipeline
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 STATE_FILE = "state.json"
 CONFIG = "uniswap_swap"
@@ -27,18 +29,27 @@ def main():
 
                 if current_block > last_processed_block:
                     # Process each new block in sequence
-                    for block_number in range(last_processed_block + 1, current_block + 1):
+                    for block_number in range(
+                        last_processed_block + 1, current_block + 1
+                    ):
                         try:
                             block = pipeline.web3.eth.get_block(block_number)
-                            block_time = datetime.fromtimestamp(block.timestamp, timezone.utc).isoformat()
+                            block_time = datetime.fromtimestamp(
+                                block.timestamp, timezone.utc
+                            ).isoformat()
 
-                            logging.info(f"Processing block {block.number} - Block Time: {block_time}")
+                            logging.info(
+                                f"Processing block {block.number} - Block Time: {block_time}"
+                            )
 
                             pipeline.process_block(block)
                             state_manager.update_last_processed_block(block_number)
 
                         except Exception as e:
-                            logging.error(f"Error processing block {block_number}: {e}", exc_info=True)
+                            logging.error(
+                                f"Error processing block {block_number}: {e}",
+                                exc_info=True,
+                            )
 
                 # Ensure all messages are sent to Kafka before the next poll
                 pipeline.flush()
