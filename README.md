@@ -70,7 +70,7 @@ You should see a dashboard like this
    - `schema`: Data schema for Kafka message format.
 3. Add the `kafka-connector` sink JSON file to `ingester/kafka-sink-configs`.
 
-Example:
+Example (`Uniswap` example in `ingester/configs/uniswap_swap.json`): 
 
 ```json
 {
